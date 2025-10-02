@@ -25,6 +25,17 @@ const ADS_PATTERNS = [
   /pubads/i,
 ];
 
+export const crawlState = {
+  isCrawling: false,
+  totalDomains: 0,
+  totalPages: 0,
+  currentDomain: null,
+  pagesChecked: 0,
+  domainsCompleted: [],
+  errors: [],
+  completed: false,
+};
+
 // --- Helper: detect regex patterns ---
 function detectPatterns(content, patterns) {
   const evidence = [];
@@ -34,7 +45,7 @@ function detectPatterns(content, patterns) {
   return { found: evidence.length > 0, evidence };
 }
 
-function writeCSV(results, filename = "crawler_results.csv") {
+export function writeCSV(results, filename = "crawler_results.csv") {
   const fields = Object.keys(results[0]);
   
   const __filename = fileURLToPath(import.meta.url);
@@ -47,8 +58,27 @@ function writeCSV(results, filename = "crawler_results.csv") {
   console.log(`✅ CSV saved as ${filePath}`);
 }
 
-// --- Crawl one domain ---
-async function crawlDomain(domain, maxPages = 4) {
+export async function crawlDomains(domains, maxPages = 4) {
+  domains = Array.isArray(domains) ? domains : [domains];
+  crawlState.isCrawling = true;
+  crawlState.totalPages = domains.length*maxPages;
+  const results = [];
+  for (const domain of domains) {
+    try {
+      const res = await crawlSingleDomain(domain, maxPages);
+      results.push(res);
+      crawlState.domainsCompleted.push(domain);
+    } catch (e) {
+      crawlState.errors.push(`Domain ${domain} failed: ${e.message}`);
+    }
+  }
+  crawlState.isCrawling = false;
+  crawlState.completed = true;
+  return results;
+}
+
+
+async function crawlSingleDomain(domain, maxPages = 4) {
   const result = {
     domain,
     pages_checked: 0,
@@ -59,6 +89,8 @@ async function crawlDomain(domain, maxPages = 4) {
     google_ads_evidence: [],
     errors: [],
   };
+  crawlState.currentDomain = domain;
+  crawlState.isCrawling = true;
 
   const visited = new Set();
 
@@ -85,11 +117,14 @@ async function crawlDomain(domain, maxPages = 4) {
     for (const url of pagesToVisit) {
       if (visited.has(url)) continue;
       visited.add(url);
-      const page = await browser.newPage();
       try {
+        const page = await browser.newPage();
+                // 2. Network requests detection
+        const reqs = [];
+        page.on("request", (req) => reqs.push(req.url()));
+
         await page.goto(url, { waitUntil: "networkidle2", timeout: 60000 });
         page.setDefaultNavigationTimeout(60000);
-        result.pages_checked++;
 
         //for streaming heavy sites
         await new Promise((resolve) => setTimeout(resolve, 5000));
@@ -98,9 +133,7 @@ async function crawlDomain(domain, maxPages = 4) {
         // 1. DOM detection
         const htmlStreaming = detectPatterns(html, STREAMING_PATTERNS);
         const htmlAds = detectPatterns(html, ADS_PATTERNS);
-        // 2. Network requests detection
-        const reqs = [];
-        page.on("request", (req) => reqs.push(req.url()));
+
 
         const netContent = reqs.join("\n");
         const netStreaming = detectPatterns(netContent, STREAMING_PATTERNS);
@@ -122,6 +155,9 @@ async function crawlDomain(domain, maxPages = 4) {
           result.google_ads_detected = true;
           result.google_ads_evidence.push(...pageAdsEvidence);
         }
+        result.pages_checked++;
+        crawlState.pagesChecked++;
+        await page.close();
       } catch (e) {
         result.errors.push(`Error visiting ${url}: ${e.message}`);
       }
@@ -130,15 +166,9 @@ async function crawlDomain(domain, maxPages = 4) {
     result.errors.push(`Domain failed: ${e.message}`);
   } finally {
     await browser.close();
-  }
 
-  // Deduplicate evidence
-  result.streaming_evidence = [...new Set(result.streaming_evidence)];
-  result.google_ads_evidence = [...new Set(result.google_ads_evidence)];
+  }
 
   return result;
 }
-module.exports = {
-  crawlDomain,
-  writeCSV
-};
+

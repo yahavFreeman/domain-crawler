@@ -1,7 +1,8 @@
-const express = require("express");
+import express from "express";
 const router = express.Router();
-const { runCrawler } = require("../controllers/crawlerController");
+import { runCrawler, getCrawlStatus } from "./crawler.controller.js";
 
 router.post("/crawl", runCrawler);
+router.get("/status", getCrawlStatus);
 
-module.exports = router;
+export default router;
