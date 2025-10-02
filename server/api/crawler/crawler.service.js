@@ -36,6 +36,17 @@ export const crawlState = {
   completed: false,
 };
 
+export function resetCrawlState() {
+  crawlState.isCrawling = false;
+  crawlState.totalDomains = 0;
+  crawlState.totalPages = 0;
+  crawlState.currentDomain = null;
+  crawlState.pagesChecked = 0;
+  crawlState.domainsCompleted = [];
+  crawlState.errors = [];
+  crawlState.completed = false;
+}
+
 // --- Helper: detect regex patterns ---
 function detectPatterns(content, patterns) {
   const evidence = [];
@@ -45,13 +56,17 @@ function detectPatterns(content, patterns) {
   return { found: evidence.length > 0, evidence };
 }
 
-export function writeCSV(results, filename = "crawler_results.csv") {
-  const fields = Object.keys(results[0]);
-  
+export function getCsvFilePath() {
+  const filename = process.env.CSV_FILENAME || "crawler_results.csv";
   const __filename = fileURLToPath(import.meta.url);
   const __dirname = path.dirname(__filename);
+  return path.join(__dirname, "../results/csv", filename);
+}
 
-  const filePath = path.join(__dirname, "../results/csv", filename);
+export function writeCSV(results) {
+  const fields = Object.keys(results[0]);
+
+  const filePath = getCsvFilePath();
 
   const csv = parse(results, { fields });
   fs.writeFileSync(filePath, csv, "utf-8");
@@ -61,6 +76,8 @@ export function writeCSV(results, filename = "crawler_results.csv") {
 export async function crawlDomains(domains, maxPages = 4) {
   domains = Array.isArray(domains) ? domains : [domains];
   crawlState.isCrawling = true;
+  crawlState.completed = false;
+  crawlState.totalDomains = domains.length;
   crawlState.totalPages = domains.length*maxPages;
   const results = [];
   for (const domain of domains) {

@@ -1,9 +1,14 @@
-import { crawlDomains, writeCSV } from "./crawler.service.js";
+import { crawlDomains, resetCrawlState, writeCSV } from "./crawler.service.js";
 import dotenv from "dotenv";
 import { crawlState } from "./crawler.service.js";
 
 export function getCrawlStatus(req, res) {
   res.json(crawlState);
+}
+
+export function resetCrawlStatus(req, res) {
+  resetCrawlState();
+  res.json({ success: true, state: crawlState });
 }
 
 export async function runCrawler(req, res) {
