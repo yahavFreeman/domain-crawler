@@ -1,6 +1,5 @@
-import { crawlDomains, resetCrawlState, writeCSV } from "./crawler.service.js";
+import {crawlState, crawlDomains, resetCrawlState, deleteCsvFile, stopCrawlingState } from "./crawler.service.js";
 import dotenv from "dotenv";
-import { crawlState } from "./crawler.service.js";
 
 export function getCrawlStatus(req, res) {
   res.json(crawlState);
@@ -8,7 +7,17 @@ export function getCrawlStatus(req, res) {
 
 export function resetCrawlStatus(req, res) {
   resetCrawlState();
+  deleteCsvFile(); 
   res.json({ success: true, state: crawlState });
+}
+
+export function stopCrawl(req, res) {
+  if (crawlState.isCrawling) {
+    stopCrawlingState();
+    res.json({ success: true, message: "Crawl stopping..." });
+  } else {
+    res.json({ success: false, message: "No crawl in progress" });
+  }
 }
 
 export async function runCrawler(req, res) {
@@ -18,9 +27,11 @@ dotenv.config();
 
 // Read the environment variable
 const domainsToCrawl = domains? domains : process.env.DOMAINS_TO_CRAWL ? JSON.parse(process.env.DOMAINS_TO_CRAWL) : [];
-    const results = await crawlDomains(domainsToCrawl, maxPages);
-    writeCSV(results); // optional
-    res.json({ success: true, results });
+        setTimeout(() => {
+    crawlDomains(domainsToCrawl, maxPages);
+    }, 0);
+    console.log("Crawl started for domains:");
+    res.json({ success: true, message: "Crawl started" });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }

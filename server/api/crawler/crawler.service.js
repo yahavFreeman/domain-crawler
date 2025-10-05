@@ -3,6 +3,7 @@ import fs from "fs";
 import { parse } from "json2csv";
 import path from "path";
 import { fileURLToPath } from "url";
+
 // --- Detection patterns ---
 const STREAMING_PATTERNS = [
   /\.m3u8/i,
@@ -25,37 +26,58 @@ const ADS_PATTERNS = [
   /pubads/i,
 ];
 
+
+// a method to keep track of crawl state
 export const crawlState = {
   isCrawling: false,
+  isStopped: false,
   totalDomains: 0,
   totalPages: 0,
   currentDomain: null,
   pagesChecked: 0,
-  domainsCompleted: [],
-  errors: [],
   completed: false,
+  errors: [],
 };
 
 export function resetCrawlState() {
   crawlState.isCrawling = false;
+  crawlState.isStopped = false;
   crawlState.totalDomains = 0;
   crawlState.totalPages = 0;
   crawlState.currentDomain = null;
   crawlState.pagesChecked = 0;
-  crawlState.domainsCompleted = [];
-  crawlState.errors = [];
   crawlState.completed = false;
+  crawlState.errors = [];
 }
 
-// --- Helper: detect regex patterns ---
+export function stopCrawlingState() {
+  if (crawlState.isCrawling) {
+    // Note: Puppeteer does not provide a direct way to stop ongoing navigation.
+    // A more robust implementation would track browser/page instances to close them here.
+    crawlState.isStopped = true;
+    crawlState.errors.push("Crawl stopped by user.");
+  }
+}
+
+// --- Helper: detect regex patterns and count them ---
 function detectPatterns(content, patterns) {
   const evidence = [];
-  for (const regexPatern of patterns) {
-    if (regexPatern.test(content)) evidence.push(regexPatern.source);
-  }
-  return { found: evidence.length > 0, evidence };
-}
 
+  for (const pattern of patterns) {
+    const regex =
+      typeof pattern === "string" ? new RegExp(pattern, "gi") : pattern;
+    const matches = content.match(regex);
+
+    if (matches && matches.length > 0) {
+      evidence.push(regex.source);
+    }
+  }
+
+  const totalCount = evidence.reduce((sum, e) => sum + 1, 0);
+
+  return { totalCount, evidence };
+}
+// give path to CSV file consistent with env var or default
 export function getCsvFilePath() {
   const filename = process.env.CSV_FILENAME || "crawler_results.csv";
   const __filename = fileURLToPath(import.meta.url);
@@ -64,38 +86,57 @@ export function getCsvFilePath() {
 }
 
 export function writeCSV(results) {
+  // do not write if stopped
+  if (crawlState.isStopped) {
+    return;
+  }
   const fields = Object.keys(results[0]);
 
   const filePath = getCsvFilePath();
 
   const csv = parse(results, { fields });
   fs.writeFileSync(filePath, csv, "utf-8");
-  console.log(`✅ CSV saved as ${filePath}`);
 }
 
+export function deleteCsvFile() {
+  const filePath = getCsvFilePath();
+  if (fs.existsSync(filePath)) {
+    fs.unlinkSync(filePath);
+  }
+}
+// --- Main crawl function ---
 export async function crawlDomains(domains, maxPages = 4) {
-  domains = Array.isArray(domains) ? domains : [domains];
+  resetCrawlState();
+  deleteCsvFile(); // remove old results
+  domains = Array.isArray(domains) ? domains : [domains];// ensure array
   crawlState.isCrawling = true;
   crawlState.completed = false;
   crawlState.totalDomains = domains.length;
-  crawlState.totalPages = domains.length*maxPages;
-  const results = [];
+  crawlState.totalPages = domains.length * maxPages;
+  const results = [];// array of domain results
+  // Crawl each domain sequentially
   for (const domain of domains) {
     try {
       const res = await crawlSingleDomain(domain, maxPages);
       results.push(res);
-      crawlState.domainsCompleted.push(domain);
+      writeCSV(results);
     } catch (e) {
       crawlState.errors.push(`Domain ${domain} failed: ${e.message}`);
     }
   }
   crawlState.isCrawling = false;
   crawlState.completed = true;
+  setTimeout(() => {
+    resetCrawlState();
+  }, 15000);
   return results;
 }
 
-
 async function crawlSingleDomain(domain, maxPages = 4) {
+  if (crawlState.isStopped) {
+    return;
+  }
+  // Initialize result object for this domain
   const result = {
     domain,
     pages_checked: 0,
@@ -104,20 +145,21 @@ async function crawlSingleDomain(domain, maxPages = 4) {
     streaming_evidence: [],
     google_ads_detected: false,
     google_ads_evidence: [],
+    streaming_count: 0,
+    ads_count: 0,
     errors: [],
   };
   crawlState.currentDomain = domain;
   crawlState.isCrawling = true;
-
-  const visited = new Set();
-
+  // Launch Puppeteer
   const browser = await puppeteer.launch({ headless: "new" });
   const page = await browser.newPage();
 
   try {
+    // 3. Start at homepage
     const startUrl = "https://" + domain;
-    await page.goto(startUrl, { waitUntil: "networkidle2", timeout: 60000 });
-    page.setDefaultNavigationTimeout(60000);
+    await page.goto(startUrl, { waitUntil: "networkidle2", timeout: 20000 });
+    page.setDefaultNavigationTimeout(20000);
 
     // Collect internal links
     const links = await page.$$eval("a[href]", (anchors) =>
@@ -126,54 +168,58 @@ async function crawlSingleDomain(domain, maxPages = 4) {
     const internalLinks = links.filter((l) => l.includes(domain));
 
     result.available_pages = internalLinks.length;
-    // Always include homepage first
+    // Collect pages to crawl. Always include homepage first
     const pagesToVisit = [startUrl, ...internalLinks.slice(0, maxPages - 1)];
+    if (pagesToVisit.length < maxPages) {
+      crawlState.totalPages -= (maxPages - pagesToVisit.length); // adjust total if fewer pages
+    }
 
     await page.close();
 
     for (const url of pagesToVisit) {
-      if (visited.has(url)) continue;
-      visited.add(url);
       try {
         const page = await browser.newPage();
-                // 2. Network requests detection
+        // 2. Network requests detection
         const reqs = [];
         page.on("request", (req) => reqs.push(req.url()));
 
-        await page.goto(url, { waitUntil: "networkidle2", timeout: 60000 });
-        page.setDefaultNavigationTimeout(60000);
-
-        //for streaming heavy sites
-        await new Promise((resolve) => setTimeout(resolve, 5000));
+        await page.goto(url, { waitUntil: "networkidle2", timeout: 20000 });
+        page.setDefaultNavigationTimeout(20000);
 
         const html = await page.content();
+
         // 1. DOM detection
         const htmlStreaming = detectPatterns(html, STREAMING_PATTERNS);
         const htmlAds = detectPatterns(html, ADS_PATTERNS);
-
-
+        // network requests detection
         const netContent = reqs.join("\n");
         const netStreaming = detectPatterns(netContent, STREAMING_PATTERNS);
         const netAds = detectPatterns(netContent, ADS_PATTERNS);
+        
+        // Merge count from both detectors
+        const pageStreamingCount =
+          htmlStreaming.totalCount + netStreaming.totalCount;
+        const pageAdsCount = htmlAds.totalCount + netAds.totalCount;
 
-        // Merge evidences per page uniquely
-        const pageStreamingEvidence = [
-          ...new Set([...htmlStreaming.evidence, ...netStreaming.evidence]),
-        ];
-        const pageAdsEvidence = [
-          ...new Set([...htmlAds.evidence, ...netAds.evidence]),
-        ];
-
-        if (pageStreamingEvidence.length) {
+        if (pageStreamingCount) {
           result.streaming_detected = true;
-          result.streaming_evidence.push(...pageStreamingEvidence);
+          result.streaming_evidence.push(
+            ...htmlStreaming.evidence,
+            ...netStreaming.evidence
+          );
         }
-        if (pageAdsEvidence.length) {
+        if (pageAdsCount) {
           result.google_ads_detected = true;
-          result.google_ads_evidence.push(...pageAdsEvidence);
+          result.google_ads_evidence.push(
+            ...htmlAds.evidence,
+            ...netAds.evidence
+          );
         }
-        result.pages_checked++;
-        crawlState.pagesChecked++;
+        result.streaming_count =
+          (result.streaming_count || 0) + pageStreamingCount;
+        result.ads_count = (result.ads_count || 0) + pageAdsCount;
+        result.pages_checked += 1;
+        crawlState.pagesChecked += 1;
         await page.close();
       } catch (e) {
         result.errors.push(`Error visiting ${url}: ${e.message}`);
@@ -183,9 +229,6 @@ async function crawlSingleDomain(domain, maxPages = 4) {
     result.errors.push(`Domain failed: ${e.message}`);
   } finally {
     await browser.close();
-
+    return result;
   }
-
-  return result;
 }
-
