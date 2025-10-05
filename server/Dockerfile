@@ -5,11 +5,11 @@ FROM ghcr.io/puppeteer/puppeteer:24.22.3
 WORKDIR /usr/src/app
 
 # Copy package files and install dependencies as root
-COPY server/package*.json ./
+COPY package*.json ./
 RUN npm install
 
 # Copy the rest of the server code
-COPY server ./
+COPY . ./
 
 # Ensure the CSV folder exists at runtime
 RUN mkdir -p api/results/csv
