@@ -40,7 +40,6 @@ app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
     // Start crawl in background on server start as requested
   const domains = process.env.DOMAINS_TO_CRAWL ? JSON.parse(process.env.DOMAINS_TO_CRAWL) : [];
-  console.log("Starting initial crawl for domains:", domains);
   crawlDomains(domains, 4);
 });
 
