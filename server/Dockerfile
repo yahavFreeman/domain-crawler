@@ -1,12 +1,21 @@
-FROM ghcr.io/puppeteer/puppeteer:24.22.3 
-ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
-    PUPPETEER_EXECUTABLE_PATH=/usr/bin/google-chrome-stable \
-    NODE_ENV=production
+# Use Puppeteer image (includes Node + Chromium)
+FROM ghcr.io/puppeteer/puppeteer:24.22.3
+
+# Set working directory
 WORKDIR /usr/src/app
-COPY package*.json ./
-# Give write permissions to pptruser
-RUN chown -R pptruser:pptruser /usr/src/app
-USER pptruser
+
+# Copy package files and install dependencies as root
+COPY server/package*.json ./
 RUN npm install
-COPY . .
+
+# Copy the rest of the server code
+COPY server ./
+
+# Ensure the CSV folder exists at runtime
+RUN mkdir -p api/results/csv
+
+# Expose the port your backend uses
+EXPOSE 10000
+
+# Start the backend
 CMD ["node", "index.js"]
