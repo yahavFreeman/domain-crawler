@@ -4,6 +4,10 @@ ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
     NODE_ENV=production
 WORKDIR /usr/src/app
 COPY package*.json ./
+# Run install as root
+USER root
 RUN npm install
+# Switch back to Puppeteer user if needed
+USER pptruser
 COPY . .
 CMD ["node", "index.js"]
