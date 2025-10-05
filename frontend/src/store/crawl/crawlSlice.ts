@@ -4,11 +4,13 @@ import {
   getCrawlResults,
   getCrawlStatus,
   startCrawl,
+  stopCrawl,
 } from "../../services/crawlService.ts";
 import { setError } from "../global/globalSlice.tsx";
 // Types
 interface CrawlProgress {
   isCrawling: boolean;
+  isStopped: boolean;
   totalDomains: number;
   totalPages: number;
   currentDomain: string | null;
@@ -77,7 +79,7 @@ export const fetchCrawlProgress = createAsyncThunk<
 
 export const crawlDomains = createAsyncThunk<
   void,
-  { domains: string[]; maxPages?: number },
+  { domains?: string[]; maxPages?: number },
   { rejectValue: string }
 >(
   "crawl/crawlDomains",
@@ -88,6 +90,18 @@ export const crawlDomains = createAsyncThunk<
     } catch (error: any) {
       // Set a global error
       dispatch(setError(error.message || "Failed to start crawl"));
+      return rejectWithValue(error.message);
+    }
+  }
+);
+
+export const stopCrawling = createAsyncThunk<void, void, { rejectValue: string }>(
+  "crawl/stopCrawling",
+  async (_, { rejectWithValue, dispatch }) => {
+    try {
+      await stopCrawl();
+    } catch (error: any) {
+      dispatch(setError(error.message || "Failed to stop crawl"));
       return rejectWithValue(error.message);
     }
   }
@@ -107,6 +121,7 @@ const initialState: CrawlState = {
     domainsCompleted: [],
     errors: [],
     completed: false,
+    isStopped: false
   },
   isLoading: false,
   error: null,
@@ -153,7 +168,20 @@ const crawlSlice = createSlice({
           state.progress = action.payload;
           state.isLoading = false;
         }
-      );
+      )
+      
+      .addCase(crawlDomains.pending, (state) => {
+        state.isLoading = true;
+      })
+      .addCase(crawlDomains.rejected, (state, action) => {
+        state.error = action.error.message ?? "Unknown error";
+        state.isLoading = false;
+        state.progress.isCrawling = false;
+      })
+      .addCase(crawlDomains.fulfilled, (state) => {
+        state.isLoading = false;
+        state.progress.isCrawling = true;
+      })
   },
 });
 
