@@ -9,8 +9,12 @@ export async function getCrawlStatus(): Promise<any> {
 }
 
 export async function startCrawl(
-  domains: string[],
+  domains?: string[],
   maxPages?: number
 ): Promise<any> {
   return await httpService.post("/crawler/crawl", { domains, maxPages });
+}
+
+export async function stopCrawl(): Promise<any> {
+  return await httpService.post("/crawler/stop");
 }
