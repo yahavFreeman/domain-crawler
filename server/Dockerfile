@@ -4,10 +4,9 @@ ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
     NODE_ENV=production
 WORKDIR /usr/src/app
 COPY package*.json ./
-# Run install as root
-USER root
-RUN npm install
-# Switch back to Puppeteer user if needed
+# Give write permissions to pptruser
+RUN chown -R pptruser:pptruser /usr/src/app
 USER pptruser
+RUN npm install
 COPY . .
 CMD ["node", "index.js"]
