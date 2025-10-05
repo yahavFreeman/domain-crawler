@@ -134,7 +134,7 @@ export async function crawlDomains(domains, maxPages = 4) {
 // Determine executable path based on environment
 const getExecutablePath = () => {
   if (process.env.NODE_ENV === 'production') {
-    return '/usr/bin/google-chrome'; // Render's Chrome location
+    return process.env.PUPPETEER_EXECUTABLE_PATH; // Render's Chrome location
   }
   return puppeteer.executablePath();
 };
