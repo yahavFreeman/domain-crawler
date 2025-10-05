@@ -146,7 +146,7 @@ const crawlSlice = createSlice({
               b.ads_count -
               (a.streaming_count + a.ads_count)
             );
-          }).slice(0, 20); // keep only top 20 results
+          });
           state.isLoading = false;
         }
       )

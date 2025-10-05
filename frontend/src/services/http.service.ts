@@ -2,7 +2,9 @@
 import Axios from "axios";
 import type { Method, AxiosRequestConfig } from "axios";
 
-const BASE_URL = import.meta.env.VITE_ENV === 'production' ? import.meta.env.VITE_API_URL : "//localhost:3000/api/v1";
+// const BASE_URL = import.meta.env.VITE_ENV === 'production' ? `${import.meta.env.VITE_API_URL}/api/v1` : "//localhost:3000/api/v1";
+const BASE_URL =`${import.meta.env.VITE_API_URL}/api/v1`
+
 
 const axiosInstance = Axios.create({
   withCredentials: true,

@@ -156,7 +156,7 @@ const startNewCrawl = useCallback(async () => {
           <div className=" text-center items-center mt-2">No Domain Results Yet</div>
         ) : (
           <div className="mt-2 flex flex-col xl:flex-row gap-6">
-            <CrawlDataGraph data={results} />
+            <CrawlDataGraph data={results.slice(0, 20)} />
             <CrawlDataTable
               data={results}
               title={`Crawled Domains ${
