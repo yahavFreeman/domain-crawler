@@ -18,6 +18,6 @@
     "express": "^5.1.0",
     "json2csv": "^6.0.0-alpha.2",
     "p-limit": "^7.1.1",
-    "puppeteer": "^24.22.3"
+    "puppeteer": "^19.7.2"
   }
 }
