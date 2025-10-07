@@ -30,7 +30,6 @@ const domainsToCrawl = domains? domains : process.env.DOMAINS_TO_CRAWL ? JSON.pa
         setTimeout(() => {
     crawlDomains(domainsToCrawl, maxPages);
     }, 0);
-    console.log("Crawl started for domains:");
     res.json({ success: true, message: "Crawl started" });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });

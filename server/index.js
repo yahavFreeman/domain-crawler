@@ -37,7 +37,7 @@ app.use("/api/v1/crawler", crawlerRoutes);
 app.use("/api/v1/results", resultsRoutes);
 
 app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
+  console.log(`Server running on port ${PORT}`);
     // Start crawl in background on server start as requested
   const domains = process.env.DOMAINS_TO_CRAWL ? JSON.parse(process.env.DOMAINS_TO_CRAWL) : [];
   crawlDomains(domains, 4);

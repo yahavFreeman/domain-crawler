@@ -29,19 +29,19 @@ export function CrawlDataGraph({ data }) {
     },
     {
       category: "Could Not Crawl",
-      count: data.filter((d) => d.errors?.length > 0 || d.pages_checked === 0).length,
-      domains: data.filter((d) => d.errors?.length > 0 || d.pages_checked === 0).map((d) => d.domain),
+      count: data.filter((d) => d.errors?.length > 0 && d.pages_checked === 0).length,
+      domains: data.filter((d) => d.errors?.length > 0 && d.pages_checked === 0).map((d) => d.domain),
     },
   ];
 
   const colors = ["#3b82f6", "#10b981", "#f59e0b", "#ef4444"];
 
   return (
-    <div className="w-full h-108 bg-white shadow rounded-xl p-2 pb-6">
+    <div className="xl:flex-1 w-full h-108 bg-white shadow rounded-xl p-2 pb-6">
       {/* Main chart title */}
-      <h4 className="text-center mb-4">
+      <h3 className="text-center mb-4">
         Number of Domains per Detection Category
-      </h4>
+      </h3>
 
       <ResponsiveContainer width="100%" height="100%">
         <BarChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 40 }}>

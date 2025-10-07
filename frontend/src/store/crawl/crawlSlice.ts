@@ -139,7 +139,6 @@ const crawlSlice = createSlice({
       .addCase(
         fetchCrawlResults.fulfilled,
         (state, action: PayloadAction<CrawlResult[]>) => {
-          console.log("Fetched crawl results:", action.payload);
           state.results = action.payload.sort((a, b) => {
             return (
               b.streaming_count +
@@ -167,21 +166,31 @@ const crawlSlice = createSlice({
         (state, action: PayloadAction<CrawlProgress>) => {
           state.progress = action.payload;
           state.isLoading = false;
-        }
-      )
-      
-      .addCase(crawlDomains.pending, (state) => {
-        state.isLoading = true;
-      })
-      .addCase(crawlDomains.rejected, (state, action) => {
-        state.error = action.error.message ?? "Unknown error";
-        state.isLoading = false;
-        state.progress.isCrawling = false;
-      })
-      .addCase(crawlDomains.fulfilled, (state) => {
-        state.isLoading = false;
-        state.progress.isCrawling = true;
-      })
+        })
+      // ).addCase(crawlDomains.pending, (state) => {
+      //   state.isLoading = true;
+      // })
+      // .addCase(crawlDomains.rejected, (state, action) => {
+      //   state.error = action.error.message ?? "Unknown error";
+      //   state.isLoading = false;
+      //   state.progress.isCrawling = false;
+      // })
+      // .addCase(crawlDomains.fulfilled, (state) => {
+      //   state.isLoading = false;
+      //   state.progress.isCrawling = true;
+      //   state.results = []; // Clear previous results on new crawl start
+      // })
+
+      // .addCase(stopCrawling.pending, (state) => {
+      //   state.isLoading = true;
+      // })
+      // .addCase(stopCrawling.rejected, (state, action) => {
+      //   state.error = action.error.message ?? "Unknown error";
+      //   state.isLoading = false;
+      // })
+      // .addCase(stopCrawling.fulfilled, (state) => {
+      //   state.isLoading = false;
+      // })
   },
 });
 

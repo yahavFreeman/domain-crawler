@@ -22,7 +22,6 @@ export const globalSlice = createSlice({
         },
         setError: (state, action: PayloadAction<string | null>) => {
             state.error = action.payload;
-            console.log("Global error set:", action.payload);
         },
         clearError: (state) => {
             state.error = null;

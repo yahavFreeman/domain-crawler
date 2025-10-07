@@ -106,8 +106,7 @@ const startNewCrawl = useCallback(async () => {
   };
 
   return (
-    <div className="pt-4">
-      <div className="bg-white px-2">
+      <div className="pt-4 bg-gray-50 bg-opacity-50 px-3 h-full">
         {/* Unified status text */}
         <h1 className={"text-lg text-center font-semibold mb-4"}>
           {getStatusMessage()}
@@ -155,17 +154,16 @@ const startNewCrawl = useCallback(async () => {
         {!results.length ? (
           <div className=" text-center items-center mt-2">No Domain Results Yet</div>
         ) : (
-          <div className="mt-2 flex flex-col xl:flex-row gap-6">
-            <CrawlDataGraph data={results.slice(0, 20)} />
+          <div className="mt-2 flex flex-col xl:flex-row gap-3">
+            <CrawlDataGraph data={results} />
             <CrawlDataTable
-              data={results}
-              title={`Crawled Domains ${
-                crawlProgress.isCrawling ? "(Partial)" : ""
+              data={results.slice(0, 20)}
+              title={`Top 20 Domains by Total Ads and Streams ${
+                crawlProgress.isCrawling ? "(In Progress)" : ""
               }`}
             />
           </div>
         )}
-      </div>
     </div>
   );
 };

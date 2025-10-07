@@ -26,6 +26,7 @@ const ADS_PATTERNS = [
   /pubads/i,
 ];
 
+
 // a method to keep track of crawl state
 export const crawlState = {
   isCrawling: false,
@@ -85,10 +86,6 @@ export function getCsvFilePath() {
 }
 
 export function writeCSV(results) {
-  // do not write if stopped
-  if (crawlState.isStopped) {
-    return;
-  }
   const fields = Object.keys(results[0]);
 
   const filePath = getCsvFilePath();
@@ -107,16 +104,19 @@ export function deleteCsvFile() {
 export async function crawlDomains(domains, maxPages = 4) {
   resetCrawlState();
   deleteCsvFile(); // remove old results
-  domains = Array.isArray(domains) ? domains : [domains]; // ensure array
+  domains = Array.isArray(domains) ? domains : [domains];// ensure array
   crawlState.isCrawling = true;
   crawlState.completed = false;
   crawlState.totalDomains = domains.length;
   crawlState.totalPages = domains.length * maxPages;
-  const results = []; // array of domain results
+  const results = [];// array of domain results
   // Crawl each domain sequentially
   for (const domain of domains) {
     try {
       const res = await crawlSingleDomain(domain, maxPages);
+      if (crawlState.isStopped) {
+        break;
+      }
       results.push(res);
       writeCSV(results);
     } catch (e) {
@@ -130,14 +130,6 @@ export async function crawlDomains(domains, maxPages = 4) {
   }, 15000);
   return results;
 }
-
-// Determine executable path based on environment
-const getExecutablePath = () => {
-  if (process.env.NODE_ENV === 'production') {
-    return process.env.PUPPETEER_EXECUTABLE_PATH; // Render's Chrome location
-  }
-  return puppeteer.executablePath();
-};
 
 async function crawlSingleDomain(domain, maxPages = 4) {
   if (crawlState.isStopped) {
@@ -159,24 +151,14 @@ async function crawlSingleDomain(domain, maxPages = 4) {
   crawlState.currentDomain = domain;
   crawlState.isCrawling = true;
   // Launch Puppeteer
-  const browser = await puppeteer.launch({
-    headless: "new",
-    executablePath: getExecutablePath(),
-    args: [
-      "--no-sandbox",
-      "--disable-setuid-sandbox",
-      "--disable-dev-shm-usage",
-      "--single-process",
-      "--no-zygote",
-    ],
-  });
+  const browser = await puppeteer.launch({ headless: "new" });
   const page = await browser.newPage();
 
   try {
     // 3. Start at homepage
     const startUrl = "https://" + domain;
-    await page.goto(startUrl, { waitUntil: "networkidle2", timeout: 20000 });
-    page.setDefaultNavigationTimeout(20000);
+    await page.goto(startUrl, { waitUntil: "networkidle2", timeout: 40000 });
+    page.setDefaultNavigationTimeout(40000);
 
     // Collect internal links
     const links = await page.$$eval("a[href]", (anchors) =>
@@ -188,7 +170,7 @@ async function crawlSingleDomain(domain, maxPages = 4) {
     // Collect pages to crawl. Always include homepage first
     const pagesToVisit = [startUrl, ...internalLinks.slice(0, maxPages - 1)];
     if (pagesToVisit.length < maxPages) {
-      crawlState.totalPages -= maxPages - pagesToVisit.length; // adjust total if fewer pages
+      crawlState.totalPages -= (maxPages - pagesToVisit.length); // adjust total if fewer pages
     }
 
     await page.close();
@@ -200,8 +182,8 @@ async function crawlSingleDomain(domain, maxPages = 4) {
         const reqs = [];
         page.on("request", (req) => reqs.push(req.url()));
 
-        await page.goto(url, { waitUntil: "networkidle2", timeout: 20000 });
-        page.setDefaultNavigationTimeout(20000);
+        await page.goto(url, { waitUntil: "networkidle2", timeout: 40000 });
+        page.setDefaultNavigationTimeout(40000);
 
         const html = await page.content();
 
@@ -212,7 +194,7 @@ async function crawlSingleDomain(domain, maxPages = 4) {
         const netContent = reqs.join("\n");
         const netStreaming = detectPatterns(netContent, STREAMING_PATTERNS);
         const netAds = detectPatterns(netContent, ADS_PATTERNS);
-
+        
         // Merge count from both detectors
         const pageStreamingCount =
           htmlStreaming.totalCount + netStreaming.totalCount;

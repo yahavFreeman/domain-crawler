@@ -73,20 +73,23 @@ export const CrawlDataTable: React.FC<Props> = ({ data, title }) => {
       },
     },
   };
-  return (
-    <div className="flex flex-col justify-center items-center shadow rounded-xl p-2">
-              <h4 className="text-center mb-4">
-        {title}
-      </h4>
-        <DataTable
-          columns={columns}
-          data={data}
-          pagination
-          highlightOnHover
-          striped
-          responsive
-          customStyles={customStyles}
-        />
+return (
+  <div className="flex flex-1 flex-col justify-start items-center shadow rounded-xl p-2 bg-white max-h-108">
+    <h3 className="text-center mb-4">{title}</h3>
+
+    <div className="w-full overflow-y-auto overflow-x-hidden">
+      <DataTable
+        columns={columns}
+        data={data}
+        highlightOnHover
+        striped
+        responsive
+        customStyles={customStyles}
+        dense
+        pagination={true}
+      />
     </div>
-  );
+  </div>
+);
+
 };

@@ -1,6 +1,6 @@
 # CSV results
-/results/csv/
-results/**/*.csv
+server/api/results/csv/
+server/**/*.csv
 
 # Logs
 logs
