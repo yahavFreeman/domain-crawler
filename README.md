@@ -62,7 +62,11 @@ npm run start
 # this will start a crawling procedure in the domains stated in the .env file.
 
 # Frontend
-1. Navigate to the frontend directory and download node packages
+1. Navigate to the frontend directory 
+```bash
+cd frontend
+```
+2. download node packages
 ```bash
 npm install
 ```
