@@ -74,8 +74,8 @@ export const CrawlDataTable: React.FC<Props> = ({ data, title }) => {
     },
   };
 return (
-  <div className="flex flex-1 flex-col justify-start items-center shadow rounded-xl p-2 bg-white max-h-108">
-    <h3 className="text-center mb-4">{title}</h3>
+  <div className="flex xl:flex-1 flex-col justify-start items-center shadow rounded-xl pt-2 bg-white h-108">
+    <h3 className="font-semibold text-center mb-4">{title}</h3>
 
     <div className="w-full overflow-y-auto overflow-x-hidden">
       <DataTable

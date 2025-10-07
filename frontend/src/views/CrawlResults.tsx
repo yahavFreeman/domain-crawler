@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import {
   crawlDomains,
@@ -59,6 +59,14 @@ const startNewCrawl = useCallback(async () => {
   }
 }, [dispatch, getCrawlProgress]);
 
+// Memoized top 20 results by total ads and streams
+const top20Results = useMemo(() => {
+  return [...results]
+    .sort((a, b) => 
+      (b.streaming_count + b.ads_count) - (a.streaming_count + a.ads_count)
+    )
+    .slice(0, 20);
+}, [results]);
 
   // fetch once on mount
   useEffect(() => {
@@ -102,15 +110,15 @@ const startNewCrawl = useCallback(async () => {
         results.length > 1 ? "s" : ""
       } processed.`;
     }
-    return "Idle — No Active Crawl.";
+    return "";
   };
 
   return (
       <div className="pt-4 bg-gray-50 bg-opacity-50 px-3 h-full">
         {/* Unified status text */}
-        <h1 className={"text-lg text-center font-semibold mb-4"}>
+{ getStatusMessage &&<h1 className={"text-lg text-center font-semibold mb-4"}>
           {getStatusMessage()}
-        </h1>
+        </h1>}
         {/* Progress bar only when crawling */}
         {crawlProgress.isCrawling ? (
           <>
@@ -118,14 +126,14 @@ const startNewCrawl = useCallback(async () => {
               pagesChecked={crawlProgress.pagesChecked}
               totalPages={crawlProgress.totalPages}
             />
-            <div className="text-center items-center mt-2 space-y-1">
+            <div className="text-center items-center mt-1 space-y-1 ">
               <p>
                 <span className="font-medium">Pages Checked:</span>{" "}
                 {crawlProgress.pagesChecked} / {crawlProgress.totalPages}
               </p>
               {!crawlProgress.isStopped &&
               <button
-                className="mb-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 cursor-pointer transition"
+                className="mt-1 mb-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 cursor-pointer transition"
                 onClick={() => {
                   stopCrawl();
                 }}
@@ -136,7 +144,7 @@ const startNewCrawl = useCallback(async () => {
             </div>
           </>
         ) : (
-          <div className="text-center items-center mt-2 space-y-1">
+          <div className="flex text-center w-full justify-center items-center mt-2 space-y-1">
             <button
               className="mb-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 cursor-pointer transition"
               onClick={() => {
@@ -147,17 +155,17 @@ const startNewCrawl = useCallback(async () => {
                 startNewCrawl();
               }}
             >
-              Start A New Crawl
+              Start Crawl
             </button>
           </div>
         )}
         {!results.length ? (
-          <div className=" text-center items-center mt-2">No Domain Results Yet</div>
+          <div className="text-center items-center mt-2">No Domain Results Yet</div>
         ) : (
           <div className="mt-2 flex flex-col xl:flex-row gap-3">
             <CrawlDataGraph data={results} />
             <CrawlDataTable
-              data={results.slice(0, 20)}
+              data={top20Results}
               title={`Top 20 Domains by Total Ads and Streams ${
                 crawlProgress.isCrawling ? "(In Progress)" : ""
               }`}

@@ -40,6 +40,25 @@ Exports results to a structured **CSV file** for easy analysis and sharing.
 - Provides a **summary graph** categorizing findings by type.  
 - Includes a **Top 20 domains table** ranked by number of detections.
 
+### 🧩 Limitations & Known False Positives
+
+Detection logic:
+This crawler identifies streaming and advertisement content by scanning for known patterns in URLs, script sources, and HTML tags — such as .m3u8, .mpd, MediaSource, doubleclick.net, googlesyndication, and similar keywords.
+
+# Known false positives:
+
+Streaming indicators like .m3u8, .mpd, or MediaSource may appear in unrelated scripts (e.g., analytics, polyfills, or background assets).
+
+Ad-related domains such as doubleclick.net or googlesyndication can be embedded in analytics or tracking scripts even when no actual ads are displayed.
+
+Blocked or cached ad scripts may still appear in the HTML or network responses, triggering detection despite not being active.
+
+# Known false negatives:
+
+Obfuscated or dynamically generated ad/video sources may evade detection.
+
+If a site loads content after heavy user interaction (e.g., scroll or click), it may not be captured within the crawler’s observation window.
+
 ---
 
 ## ⚙️ Installation

@@ -4,13 +4,13 @@ import {
   XAxis,
   YAxis,
   Tooltip,
-  CartesianGrid,
   ResponsiveContainer,
   Cell,
 } from "recharts";
 import { CustomTooltip } from "./utils/CustomTooltip";
+import type { CrawlResult } from "../../store/crawl/crawlSlice";
 
-export function CrawlDataGraph({ data }) {
+export function CrawlDataGraph({ data }: { data: CrawlResult[] }) {
   const chartData = [
     {
       category: "Streaming & Ads",
@@ -34,41 +34,60 @@ export function CrawlDataGraph({ data }) {
     },
   ];
 
-  const colors = ["#3b82f6", "#10b981", "#f59e0b", "#ef4444"];
+  const colors = ["#60a5fa", "#34d399", "#fbbf24", "#f87171"];
+
 
   return (
-    <div className="xl:flex-1 w-full h-108 bg-white shadow rounded-xl p-2 pb-6">
+    <div className="xl:flex-1 w-full h-108 bg-white shadow rounded-xl pt-2 pb-8">
       {/* Main chart title */}
-      <h3 className="text-center mb-4">
+      <h3 className="font-semibold text-center mb-4">
         Number of Domains per Detection Category
       </h3>
 
       <ResponsiveContainer width="100%" height="100%">
-        <BarChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 40 }}>
-          <CartesianGrid strokeDasharray="3 3" />
+        <BarChart data={chartData} margin={{ top: 20, right: 20, left: 10, bottom: 40 }}  barCategoryGap="20%">
           
-          <XAxis
-            dataKey="category"
-            label={{
-              value: "Crawl Category",
-              position: "insideBottom",
-              offset: -12,
-              fill: "#374151",
-              fontSize: 14,
-            }}
-          />
+<XAxis
+  dataKey="category"
+  interval={0}
+  tickMargin={10}
+  tick={({ x, y, payload }) => {
+const words = payload.value.match(/.{1,10}(\s|$)/g); // wrap every ~10 chars
+    return (
+      <text x={x} y={y + 10} textAnchor="middle" fill="#374151" fontSize={12}>
+        {words.map((word, index) => (
+          <tspan
+            key={index}
+            x={x}
+            dy={index === 0 ? 0 : 14} // space between lines
+          >
+            {word}
+          </tspan>
+        ))}
+      </text>
+    );
+  }}
+  label={{
+    value: "Crawl Category",
+    position: "insideBottom",
+    offset: -24,
+    fill: "#374151",
+    fontSize: 14,
+  }}
+/>
           <YAxis
             allowDecimals={false}
             label={{
               value: "Number of Domains",
               angle: -90,
-              position: "insideLeft",
+              position: "centerLeft",
+              offset: -2,
               fill: "#374151",
               fontSize: 14,
             }}
           />
           <Tooltip content={<CustomTooltip />} />
-          <Bar dataKey="count" radius={[8, 8, 0, 0]}>
+          <Bar dataKey="count" radius={[8, 8, 0, 0]} barSize={65} >
             {chartData.map((entry, index) => (
               <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />
             ))}

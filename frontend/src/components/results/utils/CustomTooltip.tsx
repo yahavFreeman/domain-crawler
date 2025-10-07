@@ -10,10 +10,13 @@ export const CustomTooltip = ({ active, payload }: { active?: boolean; payload?:
     return (
       <div className="bg-white p-3 shadow-lg rounded border max-w-xs">
         <p className="font-bold">{category}</p>
-        <p>Count: {count}</p>
-        <p className="text-xs mt-2 break-words">
-          {domains.length > 0 ? domains.join(", ") : "No domains"}
-        </p>
+        <p>Domains found: {count}</p>
+<p className="mt-2 break-words">
+  Domains: <span className="text-sm">
+    {domains.slice(0, 5).join(", ")}
+  {domains.length > 5 ? `, and ${domains.length - 5} more` : ""}
+    </span>
+</p>
       </div>
     );
   }
