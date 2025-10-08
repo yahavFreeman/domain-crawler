@@ -1,6 +1,6 @@
-# CSV results
-server/api/results/csv/
-server/**/*.csv
+# CSV results will be shown in the repository for demonstration purposes
+# server/api/results/csv/
+# server/**/*.csv
 
 # Logs
 logs

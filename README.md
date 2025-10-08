@@ -63,6 +63,11 @@ If a site loads content after heavy user interaction (e.g., scroll or click), it
 
 ## ⚙️ Installation
 
+# Clone the repository
+```bash
+git clone https://github.com/yahavFreeman/domain-crawler.git
+```
+
 # Backend
 
 1. Navigate to the server directory and copy the example file to create your local environment file:
@@ -97,4 +102,6 @@ npm run dev
 ## Run the app
 # Open your browser and navigate to: [http://localhost:5173](http://localhost:5173)
 
+The CSV file generated from my run is included in the repository under
+server/api/results/csv/crawler_results.csv.
 
