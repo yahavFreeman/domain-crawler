@@ -59,6 +59,13 @@ Obfuscated or dynamically generated ad/video sources may evade detection.
 
 If a site loads content after heavy user interaction (e.g., scroll or click), it may not be captured within the crawler’s observation window.
 
+## Domain seed list: 
+cnn.com, bbc.com, nytimes.com, twitch.tv, youtube.com, spotify.com, hulu.com, netflix.com, vimeo.com,reuters.com, theguardian.com, foxnews.com, washingtonpost.com, bloomberg.com, cnbc.com, techcrunch.com, wired.com, engadget.com, reddit.com, imdb.com, rottentomatoes.com, espn.com, nba.com, mlb.com, nfl.com, yahoo.com, msn.com, forbes.com, buzzfeed.com, medium.com, quora.com, stackexchange.com, stackoverflow.com, github.com, gitlab.com, npmjs.com, adobe.com, fiverr.com, upwork.com, etsy.com, ebay.com, amazon.com, linkedin.com, facebook.com, twitter.com, instagram.com, tiktok.com, snapchat.com, pinterest.com, wordpress.com
+
+## 📂 CSV Output
+The CSV file generated from my run is included in the repository under
+server/api/results/csv/crawler_results.csv.
+
 ---
 
 ## ⚙️ Installation
@@ -101,7 +108,3 @@ npm run dev
 
 ## Run the app
 # Open your browser and navigate to: [http://localhost:5173](http://localhost:5173)
-
-The CSV file generated from my run is included in the repository under
-server/api/results/csv/crawler_results.csv.
-
