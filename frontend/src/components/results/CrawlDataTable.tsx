@@ -72,9 +72,14 @@ export const CrawlDataTable: React.FC<Props> = ({ data, title }) => {
         padding: "0px",
       },
     },
+        pagination: {
+      style: {
+        justifyContent: 'center',
+      }
+    }
   };
 return (
-  <div className="flex xl:flex-1 flex-col justify-start items-center shadow rounded-xl pt-2 bg-white h-108">
+  <div className="flex xl:flex-1 flex-col justify-center items-center shadow rounded-xl pt-2 bg-white h-108">
     <h3 className="font-semibold text-center mb-4">{title}</h3>
 
     <div className="w-full overflow-y-auto overflow-x-hidden">
